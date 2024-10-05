@@ -1,0 +1,6 @@
+package com.example.caso_prestamos.Domain.Entity;
+
+
+public class Admin  {
+
+}
