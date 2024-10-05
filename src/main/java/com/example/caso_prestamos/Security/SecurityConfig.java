@@ -28,6 +28,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/admin/loan/**").hasRole("ADMIN")  // Solo los administradores pueden gestionar préstamos
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
