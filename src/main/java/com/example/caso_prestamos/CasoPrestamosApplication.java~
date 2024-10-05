@@ -1,16 +1,12 @@
 package com.example.caso_prestamos;
 
-import com.example.caso_prestamos.Domain.Entity.Admin;
-import com.example.caso_prestamos.Repository.AdminRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
 public class CasoPrestamosApplication implements CommandLineRunner {
-	private final AdminRepository adminRepository;
+	rivate final AdminRepository adminRepository;
 	private final PasswordEncoder passwordEncoder;
 
 	@Autowired
