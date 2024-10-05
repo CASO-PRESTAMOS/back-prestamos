@@ -1,6 +1,7 @@
 package com.example.caso_prestamos;
 
 import com.example.caso_prestamos.Domain.Entity.Admin;
+import com.example.caso_prestamos.Domain.Entity.Role;
 import com.example.caso_prestamos.Repository.AdminRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -29,8 +30,9 @@ public class CasoPrestamosApplication implements CommandLineRunner {
 			Admin admin = new Admin();
 			admin.setUsername("admin");
 			admin.setPassword(passwordEncoder.encode("admin123"));
+			admin.setRole(Role.ADMIN);  // Asignar rol de ADMIN
 			adminRepository.save(admin);
-			System.out.println("Administrador pre-registrado con éxito.");
+			System.out.println("Administrador pre-registrado con éxito con rol ADMIN.");
 		}
 	}
 }
