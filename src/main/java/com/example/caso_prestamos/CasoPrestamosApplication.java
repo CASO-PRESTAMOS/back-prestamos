@@ -7,9 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
+@EnableScheduling
 public class CasoPrestamosApplication implements CommandLineRunner {
 	private final AdminRepository adminRepository;
 	private final PasswordEncoder passwordEncoder;
@@ -30,7 +32,7 @@ public class CasoPrestamosApplication implements CommandLineRunner {
 			Admin admin = new Admin();
 			admin.setUsername("admin");
 			admin.setPassword(passwordEncoder.encode("admin123"));
-			admin.setRole(Role.ADMIN);
+			admin.setRole(Role.ADMIN);  // Asignar rol de ADMIN
 			adminRepository.save(admin);
 			System.out.println("Administrador pre-registrado con éxito con rol ADMIN.");
 		}

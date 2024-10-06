@@ -27,11 +27,11 @@ public class VencimientoServiceImpl implements VencimientoService {
         if (prestamoOptional.isPresent()) {
             Prestamo prestamo = prestamoOptional.get();
 
-            // Obtener la fecha de vencimiento directamente
-            LocalDateTime fechaVencimiento = prestamo.getFechaVencimiento();
 
-            // Verificar si ya ha vencido comparando la fecha actual con la fecha de vencimiento
-            if (fechaVencimiento.isBefore(fechaActual)) {
+            LocalDateTime fechaVencimiento = calcularFechaVencimiento(prestamo.getFechaInicio(), prestamo.getDuracion());
+
+
+            if (fechaVencimiento.isBefore(prestamo.getFechaVencimiento())) {
                 return "El préstamo con ID: " + vencimientoDTO.getIdPrestamo() + " ha vencido. Fecha de vencimiento: " + fechaVencimiento;
             } else {
                 return "El préstamo con ID: " + vencimientoDTO.getIdPrestamo() + " aún no ha vencido. Fecha de vencimiento: " + fechaVencimiento;
@@ -47,9 +47,8 @@ public class VencimientoServiceImpl implements VencimientoService {
         } else if (duracion == Duracion.SEIS_MESES) {
             return fechaInicio.plusMonths(6);
         }
-        return fechaInicio; // Caso por defecto
+        return fechaInicio;
     }
-
 
     @Override
     public void notificarAdministrador(VencimientoDTO vencimientoDTO) {
