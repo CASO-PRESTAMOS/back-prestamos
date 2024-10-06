@@ -1,7 +1,7 @@
 package com.example.caso_prestamos.Service.Impl;
 
 import com.example.caso_prestamos.Domain.Entity.Loan;
-import com.example.caso_prestamos.Domain.Entity.Status;
+import com.example.caso_prestamos.Domain.Enum.Estado;
 import com.example.caso_prestamos.Repository.LoanRepository;
 import com.example.caso_prestamos.Service.LoanService;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +50,7 @@ public class LoanServiceImpl implements LoanService {
         loan.setTotalAmount(finalAmount);
 
         // Establecemos otros atributos predeterminados
-        loan.setStatus(Status.PENDING);
+        loan.setStatus(Estado.PENDIENTE);
         // Guardamos el préstamo en la base de datos
         return loanRepository.save(loan);
     }
@@ -75,8 +75,8 @@ public class LoanServiceImpl implements LoanService {
         LocalDateTime now = LocalDateTime.now();
 
         for (Loan loan : loans) {
-            if (loan.getStatus().equals(Status.PENDING) && loan.getExpireDate().isBefore(now)) {
-                loan.setStatus(Status.EXPIRED);
+            if (loan.getStatus().equals(Estado.PENDIENTE) && loan.getExpireDate().isBefore(now)) {
+                loan.setStatus(Estado.VENCIDO);
                 loanRepository.save(loan);
             }
         }

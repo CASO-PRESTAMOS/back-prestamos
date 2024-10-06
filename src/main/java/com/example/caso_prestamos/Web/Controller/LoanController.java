@@ -2,7 +2,6 @@ package com.example.caso_prestamos.Web.Controller;
 
 import com.example.caso_prestamos.Domain.Entity.Loan;
 import com.example.caso_prestamos.Service.LoanService;
-import com.example.caso_prestamos.Service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +17,6 @@ import java.util.List;
 public class LoanController {
 
     private final LoanService loanService;
-    private final UserService userService;
 
     @GetMapping("/all")
     public ResponseEntity<List<Loan>> getAll() {
@@ -27,17 +25,9 @@ public class LoanController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createLoan(@RequestBody Loan loan) {
-        try {
-            if (userService.validateDni(loan.getClientDNI())) {
-                Loan newLoan = loanService.create(loan);
-                return new ResponseEntity<>(newLoan, HttpStatus.CREATED);
-            } else {
-                return new ResponseEntity<>("DNI no válido", HttpStatus.BAD_REQUEST);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>("Error al validar el DNI: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<Loan> createLoan(@RequestBody Loan loan) {
+        Loan newLoan = loanService.create(loan);
+        return new ResponseEntity<>(newLoan, HttpStatus.CREATED);
     }
 
     @PutMapping("/update/{id}")
