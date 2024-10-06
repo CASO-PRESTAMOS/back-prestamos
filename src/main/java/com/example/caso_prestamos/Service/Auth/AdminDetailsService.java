@@ -15,14 +15,19 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class AdminDetailsService implements UserDetailsService {
 
+
     private final AdminRepository adminRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Admin admin = adminRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
-        return new org.springframework.security.core.userdetails.User(admin.getUsername(), admin.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));
+
+        return new org.springframework.security.core.userdetails.User(
+                admin.getUsername(),
+                admin.getPassword(),
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + admin.getRole().name())) // Retorna el rol correctamente
+        );
     }
 }
 
