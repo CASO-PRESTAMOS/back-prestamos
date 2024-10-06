@@ -13,28 +13,19 @@ import java.time.LocalDateTime;
 public class Loan {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long loanID;
+    private Long loanId;
 
-    @ManyToOne
-    @JoinColumn(name="user_id", nullable = false, foreignKey = @ForeignKey(name = "FK_user_loan"))
-    private User userID;
+    private String clientName;
+    private String clientDNI;
+    private String clientAddress;
+    private Double amount;
+    private Integer duration; // Duration in months
+    private Double interestRate;
+    private Double totalAmount;
 
-    @Column(name = "amount", nullable = false)
-    private double amount;
-
-    @Column(name = "start_date", nullable = false)
     private LocalDateTime startDate;
-
-    @Column(name = "expired_date", nullable = false)
     private LocalDateTime expireDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
     private Status status;
-
-    @Column(name = "duration", nullable = false)
-    private Integer duration;
-
-    @Column(name = "interest_rate", nullable = false)
-    private Double interestRate;
 }

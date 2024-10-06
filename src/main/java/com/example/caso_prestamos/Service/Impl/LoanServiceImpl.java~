@@ -42,7 +42,7 @@ public class LoanServiceImpl implements LoanService {
 
         // Calculamos el monto final sumando el interés al monto inicial
         double finalAmount = loan.getAmount() + (loan.getAmount() * loan.getInterestRate());
-        loan.setTotalAmount(finalAmount);
+        loan.setAmount(finalAmount);
 
         // Establecemos otros atributos predeterminados
         loan.setStatus(Status.PENDING);

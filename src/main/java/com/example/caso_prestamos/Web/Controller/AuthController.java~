@@ -28,7 +28,7 @@ public class AuthController {
     public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginRequest.username(), loginRequest.password()
+                        loginRequest.getUsername(), loginRequest.getPassword()
                 )
         );
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
