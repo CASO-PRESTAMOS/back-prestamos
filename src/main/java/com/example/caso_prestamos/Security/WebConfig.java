@@ -20,7 +20,7 @@ public class WebConfig implements Filter {
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        // Método init opcional
+        // Metodo init opcional
     }
 
     @Override
