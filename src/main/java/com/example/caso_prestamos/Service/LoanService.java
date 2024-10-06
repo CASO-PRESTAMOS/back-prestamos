@@ -13,4 +13,6 @@ public interface LoanService {
     Loan create(Loan loan);
 
     Loan update(Long id, Loan loan);
+
+    void updateExpiredLoans();
 }
