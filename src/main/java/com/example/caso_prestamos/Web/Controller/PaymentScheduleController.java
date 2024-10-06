@@ -3,18 +3,20 @@ package com.example.caso_prestamos.Web.Controller;
 import com.example.caso_prestamos.Domain.Entity.PaymentSchedule;
 import com.example.caso_prestamos.Service.PaymentScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/payment-schedule")
+@RequestMapping("/api/admin/payment-schedule")
+@PreAuthorize("hasRole('ADMIN')")
 public class PaymentScheduleController {
 
     @Autowired
     private PaymentScheduleService paymentScheduleService;
 
-    @GetMapping("/generate/")
+    @GetMapping("/generate")
     public List<PaymentSchedule> getAllPaymentSchedules() {
         // Generar cronogramas de pago antes de obtener todos
         paymentScheduleService.generatePaymentSchedulesForAllLoans();
