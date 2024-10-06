@@ -1,6 +1,5 @@
 package com.example.caso_prestamos.Domain.Entity;
 
-import com.example.caso_prestamos.Domain.Enum.Estado;
 import jakarta.persistence.*;
 import jakarta.persistence.Id;
 import lombok.Data;
@@ -28,5 +27,5 @@ public class Loan {
     private LocalDateTime expireDate;
 
     @Enumerated(EnumType.STRING)
-    private Estado status;
+    private Status status;
 }
