@@ -1,58 +1,53 @@
 package com.example.caso_prestamos.Web.Controller;
 
 import com.example.caso_prestamos.Domain.Entity.Loan;
+import com.example.caso_prestamos.Domain.Entity.PaymentSchedule;
 import com.example.caso_prestamos.Service.LoanService;
-import com.example.caso_prestamos.Service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/admin/loan")
+@RequestMapping("/api/admin/loans")
+@RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class LoanController {
 
     private final LoanService loanService;
-    private final UserService userService;
 
-    @GetMapping("/all")
-    public ResponseEntity<List<Loan>> getAll() {
-        List<Loan> loans = loanService.getAll();
-        return new ResponseEntity<>(loans, HttpStatus.OK);
-    }
-
+    // Crear un préstamo para un usuario
     @PostMapping("/create")
-    public ResponseEntity<?> createLoan(@RequestBody Loan loan) {
-        try {
-            if (userService.validateDni(loan.getClientDNI())) {
-                Loan newLoan = loanService.create(loan);
-                return new ResponseEntity<>(newLoan, HttpStatus.CREATED);
-            } else {
-                return new ResponseEntity<>("DNI no válido", HttpStatus.BAD_REQUEST);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>("Error al validar el DNI: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<Loan> createLoan(
+            @RequestParam String dni,
+            @RequestParam Double amount,
+            @RequestParam Integer months) {
+        Loan loan = loanService.createLoan(dni, amount, months);
+        return ResponseEntity.ok(loan);
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<Loan> updateLoan(@PathVariable("id") Long id, @RequestBody Loan loan) {
-        Loan updatedLoan = loanService.update(id, loan);
-        return new ResponseEntity<>(updatedLoan, HttpStatus.OK);
+    // Obtener todos los préstamos de un usuario
+    @GetMapping("/user/{dni}")
+    public ResponseEntity<List<Loan>> getLoansByUser(@PathVariable String dni) {
+        List<Loan> loans = loanService.getLoansByUser(dni);
+        return ResponseEntity.ok(loans);
     }
 
-    @GetMapping("/select/{id}")
-    public ResponseEntity<Loan> getLoanById(@PathVariable("id") Long id) {
-        try {
-            Loan loan = loanService.findById(id);
-            return new ResponseEntity<>(loan, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    // Actualizar el estado de un pago en el cronograma de pagos
+    @PatchMapping("/payment/{paymentId}")
+    public ResponseEntity<Void> updatePaymentStatus(
+            @PathVariable Long paymentId,
+            @RequestParam String status) {
+        loanService.updatePaymentStatus(paymentId, status);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Obtener el cronograma de pagos de un préstamo
+    @GetMapping("/{loanId}/schedule")
+    public ResponseEntity<List<PaymentSchedule>> getPaymentScheduleByLoan(@PathVariable Long loanId) {
+        List<PaymentSchedule> schedule = loanService.getPaymentScheduleByLoan(loanId);
+        return ResponseEntity.ok(schedule);
     }
 }

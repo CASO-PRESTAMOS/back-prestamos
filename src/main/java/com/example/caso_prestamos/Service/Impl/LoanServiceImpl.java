@@ -1,84 +1,94 @@
 package com.example.caso_prestamos.Service.Impl;
 
-import com.example.caso_prestamos.Domain.Entity.Loan;
-import com.example.caso_prestamos.Domain.Entity.Status;
+import com.example.caso_prestamos.Domain.Entity.*;
 import com.example.caso_prestamos.Repository.LoanRepository;
+import com.example.caso_prestamos.Repository.PaymentScheduleRepository;
+import com.example.caso_prestamos.Repository.UserRepository;
 import com.example.caso_prestamos.Service.LoanService;
+import com.example.caso_prestamos.Service.PaymentScheduleService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-@Service
 @RequiredArgsConstructor
+@Service
 public class LoanServiceImpl implements LoanService {
 
     private final LoanRepository loanRepository;
+    private final UserRepository userRepository;
+    private final PaymentScheduleService paymentScheduleService;
+    private final PaymentScheduleRepository paymentScheduleRepository;
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Loan> getAll() {
-        return loanRepository.findAll();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Loan findById(Long id) {
-        return loanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
-    }
-
-    @Override
-    @Transactional
-    public Loan create(Loan loan) {
-
-        loan.setStartDate(LocalDateTime.now());
-        // Lógica de negocio que asigna las tasas de interés basadas en la duración del préstamo
-        if (loan.getDuration() == 2) {
-            loan.setInterestRate(0.1);
-            loan.setExpireDate(loan.getStartDate().plusDays(60));
-        } else if (loan.getDuration() == 6) {
-            loan.setInterestRate(0.2);
-            loan.setExpireDate(loan.getStartDate().plusDays(180));
+    public Loan createLoan(String dni, Double amount, Integer months) {
+        if (months != 2 && months != 6) {
+            throw new IllegalArgumentException("La duración del préstamo solo puede ser de 2 o 6 meses.");
         }
 
-        // Calculamos el monto final sumando el interés al monto inicial
-        double finalAmount = loan.getAmount() + (loan.getAmount() * loan.getInterestRate());
-        loan.setTotalAmount(finalAmount);
+        User user = userRepository.findById(dni)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con DNI: " + dni));
 
-        // Establecemos otros atributos predeterminados
-        loan.setStatus(Status.PENDING);
-        // Guardamos el préstamo en la base de datos
-        return loanRepository.save(loan);
+        Loan loan = new Loan();
+        loan.setUser(user);
+        loan.setAmount(amount);
+        loan.setMonths(months);
+        loan.setInterestRate(calculateInterestRate(months));
+        loan.setStartDate(LocalDate.now());
+        loan.setEndDate(LocalDate.now().plusMonths(months));
+        loan.setStatus(LoanStatus.UNPAID);
+
+        Loan savedLoan = loanRepository.save(loan);
+
+        // Crear cronograma de pagos
+        List<PaymentSchedule> paymentScheduleList = paymentScheduleService.generatePaymentSchedule(savedLoan);
+        savedLoan.setPaymentScheduleList(paymentScheduleList);
+
+        return loanRepository.save(savedLoan);
     }
 
     @Override
-    @Transactional
-    public Loan update(Long id, Loan loan) {
-        Loan loanFromDb = findById(id);
-
-        // Actualizamos solo los campos relevantes
-        loanFromDb.setStatus(loan.getStatus());
-
-        // Guardamos los cambios en la base de datos
-        return loanRepository.save(loanFromDb);
+    public List<Loan> getLoansByUser(String dni) {
+        User user = userRepository.findById(dni)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con DNI: " + dni));
+        return loanRepository.findByUser(user);
     }
 
-    @Scheduled(fixedRate = 10000) // Cada hora
-    @Transactional
-    public void updateExpiredLoans() {
-        System.out.println("ACTUALIZANDO");
-        List<Loan> loans = loanRepository.findAll();
-        LocalDateTime now = LocalDateTime.now();
+    @Override
+    public void updatePaymentStatus(Long paymentId, String status) {
+        // Validar estado
+        PaymentStatus paymentStatus = PaymentStatus.valueOf(status.toUpperCase());
 
-        for (Loan loan : loans) {
-            if (loan.getStatus().equals(Status.PENDING) && loan.getExpireDate().isBefore(now)) {
-                loan.setStatus(Status.EXPIRED);
-                loanRepository.save(loan);
-            }
+
+        PaymentSchedule payment = paymentScheduleRepository.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Pago no encontrado con ID: " + paymentId));
+
+        payment.setStatus(paymentStatus);
+        paymentScheduleRepository.save(payment);
+
+        // Validar si todos los pagos están pagados
+        Loan loan = payment.getLoan();
+        boolean allPaid = loan.getPaymentScheduleList().stream()
+                .allMatch(ps -> ps.getStatus() == PaymentStatus.PAID);
+
+        if (allPaid) {
+            loan.setStatus(LoanStatus.PAID);
+            loanRepository.save(loan);
         }
+    }
+
+    @Override
+    public List<PaymentSchedule> getPaymentScheduleByLoan(Long loanId) {
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new RuntimeException("Préstamo no encontrado con ID: " + loanId));
+        return loan.getPaymentScheduleList();
+    }
+
+    private Double calculateInterestRate(Integer months) {
+        // Ejemplo simple: 2% por 2 meses y 4% por 6 meses
+        return months == 2 ? 0.02 : 0.04;
     }
 }

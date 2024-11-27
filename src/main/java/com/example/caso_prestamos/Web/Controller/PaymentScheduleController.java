@@ -2,31 +2,23 @@ package com.example.caso_prestamos.Web.Controller;
 
 import com.example.caso_prestamos.Domain.Entity.PaymentSchedule;
 import com.example.caso_prestamos.Service.PaymentScheduleService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/admin/payment-schedule")
-@PreAuthorize("hasRole('ADMIN')")
+@RequestMapping("/api/admin/payments")
+@RequiredArgsConstructor
 public class PaymentScheduleController {
 
-    @Autowired
-    private PaymentScheduleService paymentScheduleService;
+    private final PaymentScheduleService paymentScheduleService;
 
-    @GetMapping("/generate")
-    public List<PaymentSchedule> getAllPaymentSchedules() {
-        // Generar cronogramas de pago antes de obtener todos
-        paymentScheduleService.generatePaymentSchedulesForAllLoans();
-
-        // Obtener todos los cronogramas
-        return paymentScheduleService.getAllPaymentSchedules();
-    }
-
-    @PostMapping("/mark-completed/{paymentId}")
-    public void markPaymentAsCompleted(@PathVariable Long paymentId) {
-        paymentScheduleService.markPaymentAsCompleted(paymentId);
+    // Marcar todas las cuotas como pagadas de un prestamo
+    @PatchMapping("/loan/{loanId}/markAsPaid")
+    public ResponseEntity<Void> markAllAsPaid(@PathVariable Long loanId) {
+        paymentScheduleService.markAllAsPaid(loanId);
+        return ResponseEntity.noContent().build();
     }
 }
