@@ -7,8 +7,10 @@ import java.util.List;
 
 public interface LoanService {
 
-    Loan createLoan(String dni, Double amount, Integer months);
-    List<Loan> getLoansByUser(String dni);
-    void updatePaymentStatus(Long paymentId, String status);
+    Loan createLoan(String identifier, Double amount, Integer months);
+    List<Loan> getLoansByUser(String identifier);
+    void updatePaymentStatus(Long paymentId);
     List<PaymentSchedule> getPaymentScheduleByLoan(Long loanId);
+    boolean doesPaymentExist(Long paymentId);
+    boolean doesLoanExist(Long loanId);
 }

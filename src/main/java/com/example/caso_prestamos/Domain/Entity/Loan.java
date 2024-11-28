@@ -30,7 +30,6 @@ public class Loan {
     @Enumerated(EnumType.STRING)
     private LoanStatus status; // Estado del préstamo
 
-
     @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PaymentSchedule> paymentScheduleList; // Lista de pagos asociados
 
