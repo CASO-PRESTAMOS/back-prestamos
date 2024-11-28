@@ -40,7 +40,7 @@ public class UserController {
                     .map(user -> new ResponseEntity<>(user, HttpStatus.OK))
                     .orElseThrow(() -> new IllegalArgumentException("Usuario con identificador " + identifier + " no encontrado."));
         } catch (IllegalArgumentException e) {
-            throw e; // Será manejado por CustomExceptionHandler
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("Error al obtener el usuario: " + e.getMessage(), e);
         }

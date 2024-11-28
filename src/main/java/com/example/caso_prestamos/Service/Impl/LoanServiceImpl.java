@@ -23,13 +23,22 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public Loan createLoan(String identifier, Double amount, Integer months) {
+        // Validación de duración del préstamo
         if (months != 1 && months != 6) {
             throw new IllegalArgumentException("La duración del préstamo solo puede ser de 1 o 6 meses.");
         }
 
+        // Buscar el usuario
         User user = userRepository.findById(identifier)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con DNI: " + identifier));
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con identificador: " + identifier));
 
+        // Verificar si el usuario tiene un préstamo activo no pagado
+        Loan existingLoan = loanRepository.findFirstByUserAndStatusNot(user, LoanStatus.PAID);
+        if (existingLoan != null) {
+            throw new IllegalArgumentException("El usuario ya tiene un préstamo activo que no ha sido pagado.");
+        }
+
+        // Crear el nuevo préstamo
         Loan loan = new Loan();
         loan.setUser(user);
         loan.setAmount(amount);
@@ -48,6 +57,7 @@ public class LoanServiceImpl implements LoanService {
         return loanRepository.save(savedLoan);
     }
 
+
     @Override
     public List<Loan> getLoansByUser(String identifier) {
         User user = userRepository.findById(identifier)
@@ -65,8 +75,22 @@ public class LoanServiceImpl implements LoanService {
         payment.setStatus(PaymentStatus.PAID);
         paymentScheduleRepository.save(payment);
 
-        // Validar si todos los pagos están pagados
+        // Obtener el préstamo asociado a la cuota
         Loan loan = payment.getLoan();
+
+        // Recorrer todas las cuotas y marcar como PAID las anteriores a la cuota actual
+        List<PaymentSchedule> paymentSchedules = loan.getPaymentScheduleList();
+        for (PaymentSchedule currentPayment : paymentSchedules) {
+            // Si el índice de la cuota es menor que la cuota seleccionada, marcar como PAID
+            if (currentPayment.getPaymentDate().isBefore(payment.getPaymentDate())) {
+                if (currentPayment.getStatus() != PaymentStatus.PAID) {
+                    currentPayment.setStatus(PaymentStatus.PAID);
+                    paymentScheduleRepository.save(currentPayment);
+                }
+            }
+        }
+
+        // Verificar si todos los pagos están pagados
         boolean allPaid = loan.getPaymentScheduleList().stream()
                 .allMatch(ps -> ps.getStatus() == PaymentStatus.PAID);
 
@@ -77,6 +101,7 @@ public class LoanServiceImpl implements LoanService {
         }
     }
 
+
     @Override
     public List<PaymentSchedule> getPaymentScheduleByLoan(Long loanId) {
         Loan loan = loanRepository.findById(loanId)
@@ -85,8 +110,8 @@ public class LoanServiceImpl implements LoanService {
     }
 
     private Double calculateInterestRate(Integer months) {
-        // Ejemplo simple: 2% por 2 meses y 4% por 6 meses
-        return months == 2 ? 0.02 : 0.04;
+        // Ejemplo simple: 2% por 1 mes y 4% por 6 meses
+        return months == 1 ? 0.20 : 0.40;
     }
 
     public boolean doesPaymentExist(Long paymentId) {

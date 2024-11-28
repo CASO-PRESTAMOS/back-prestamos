@@ -8,7 +8,9 @@ import com.example.caso_prestamos.Repository.LoanRepository;
 import com.example.caso_prestamos.Repository.PaymentScheduleRepository;
 import com.example.caso_prestamos.Service.PaymentScheduleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -37,8 +39,30 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
             scheduleList.add(payment);
             paymentDate = paymentDate.plusDays(30);
         }
-
         return paymentScheduleRepository.saveAll(scheduleList);
+    }
+
+    // Este metodo se ejecutara automaticamente cada dia a la medianoche
+    @Transactional
+    @Scheduled(cron = "0 0 0 * * ?")  // Ejecuta a las 00:00 todos los días
+    public void updatePaymentStatusAutomatically() {
+        // Obtener todos los pagos no pagados cuyo plazo haya pasado
+        List<PaymentSchedule> overduePayments = paymentScheduleRepository.findAllByStatusAndPaymentDateBefore(PaymentStatus.UNPAID, LocalDate.now());
+
+        for (PaymentSchedule payment : overduePayments) {
+            // Si la fecha de pago ya pasó y el pago no está realizado, actualizar el estado a LATE
+            if (payment.getPaymentDate().isBefore(LocalDate.now())) {
+                payment.setStatus(PaymentStatus.LATE);
+                paymentScheduleRepository.save(payment);
+
+                // Actualizar el estado del préstamo a LATE si tiene pagos atrasados
+                Loan loan = payment.getLoan();
+                if (loan.getPaymentScheduleList().stream().anyMatch(ps -> ps.getStatus() == PaymentStatus.LATE)) {
+                    loan.setStatus(LoanStatus.LATE);
+                    loanRepository.save(loan);
+                }
+            }
+        }
     }
 
     @Override
