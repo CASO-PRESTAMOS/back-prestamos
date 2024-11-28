@@ -36,7 +36,7 @@ public class LoanServiceImpl implements LoanService {
         loan.setMonths(months);
         loan.setInterestRate(calculateInterestRate(months));
         loan.setStartDate(LocalDate.now());
-        loan.setEndDate(LocalDate.now().plusMonths(months));
+        loan.setEndDate(LocalDate.now().plusDays(months * 30));
         loan.setStatus(LoanStatus.UNPAID);
 
         Loan savedLoan = loanRepository.save(loan);

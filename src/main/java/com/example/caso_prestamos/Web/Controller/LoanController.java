@@ -31,6 +31,9 @@ public class LoanController {
             if (amount <= 0) {
                 throw new IllegalArgumentException("El monto debe ser mayor a cero.");
             }
+            if (amount > 5000) {
+                throw new IllegalArgumentException("El monto debe ser menor a cinco mil.");
+            }
             if (months <= 0) {
                 throw new IllegalArgumentException("La duración en meses debe ser mayor a cero.");
             }

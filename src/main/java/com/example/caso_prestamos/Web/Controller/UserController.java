@@ -31,6 +31,7 @@ public class UserController {
             throw new RuntimeException("Error al crear el usuario: " + e.getMessage(), e);
         }
     }
+
     // Endpoint para obtener un usuario por DNI
     @GetMapping("/{identifier}")
     public ResponseEntity<User> getUserByIdentifier(@PathVariable String identifier) {

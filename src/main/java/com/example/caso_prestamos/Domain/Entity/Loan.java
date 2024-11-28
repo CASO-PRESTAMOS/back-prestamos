@@ -18,7 +18,7 @@ public class Loan {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_dni", nullable = false)
+    @JoinColumn(name = "user_identifier", nullable = false)
     private User user; // Relación con User
 
     private Double amount; // Monto del préstamo

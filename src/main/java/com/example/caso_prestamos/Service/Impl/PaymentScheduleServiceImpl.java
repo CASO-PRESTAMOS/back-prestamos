@@ -26,7 +26,7 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
         List<PaymentSchedule> scheduleList = new ArrayList<>();
         Double monthlyPayment = loan.getAmount() / loan.getMonths();
 
-        LocalDate paymentDate = loan.getStartDate().plusMonths(1);
+        LocalDate paymentDate = loan.getStartDate().plusDays(30);
         for (int i = 0; i < loan.getMonths(); i++) {
             PaymentSchedule payment = new PaymentSchedule();
             payment.setLoan(loan);
@@ -35,7 +35,7 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
             payment.setStatus(PaymentStatus.UNPAID);
 
             scheduleList.add(payment);
-            paymentDate = paymentDate.plusMonths(1);
+            paymentDate = paymentDate.plusDays(30);
         }
 
         return paymentScheduleRepository.saveAll(scheduleList);
