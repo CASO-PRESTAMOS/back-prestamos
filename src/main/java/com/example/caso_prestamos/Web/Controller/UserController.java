@@ -18,9 +18,12 @@ public class UserController {
 
     // Endpoint para crear un usuario a partir de su DNI
     @PostMapping("/create")
-    public ResponseEntity<User> createUser(@RequestParam String dni) {
+    public ResponseEntity<User> createUser(@RequestParam String identifier) {
         try {
-            User user = userService.createUser(dni);
+            if (identifier.length() != 8 && identifier.length() != 11) {
+                throw new IllegalArgumentException("El identificador debe ser un DNI (8 dígitos) o RUC (11 dígitos).");
+            }
+            User user = userService.createUser(identifier);
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -28,9 +31,9 @@ public class UserController {
     }
 
     // Endpoint para obtener un usuario por DNI
-    @GetMapping("/{dni}")
-    public ResponseEntity<User> getUserByDni(@PathVariable String dni) {
-        return userService.getUserByDni(dni)
+    @GetMapping("/{identifier}")
+    public ResponseEntity<User> getUserByIdentifier(@PathVariable String identifier) {
+        return userService.getUserByIdentifier(identifier)
                 .map(user -> new ResponseEntity<>(user, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
@@ -48,10 +51,10 @@ public class UserController {
     }
 
     // Endpoint para eliminar un usuario por DNI
-    @DeleteMapping("/delete/{dni}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String dni) {
+    @DeleteMapping("/delete/{identifier}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String identifier) {
         try {
-            userService.deleteUser(dni);
+            userService.deleteUser(identifier);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

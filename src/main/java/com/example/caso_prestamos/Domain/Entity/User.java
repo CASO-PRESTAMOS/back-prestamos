@@ -14,9 +14,7 @@ import lombok.NoArgsConstructor;
 public class User {
 
     @Id
-    private String dni; // El DNI será la clave primaria
+    private String identifier; // Puede ser DNI (8 dígitos) o RUC (11 dígitos)
 
-    private String firstNames;
-    private String lastName;
-    private String lastMotherName;
+    private String fullName; // Se usará tanto para nombres completos como razón social
 }
