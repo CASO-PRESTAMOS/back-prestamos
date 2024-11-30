@@ -27,4 +27,6 @@ public class PaymentSchedule {
     @Enumerated(EnumType.STRING)
     private PaymentStatus status; // Estado del pago
 
+    private LocalDate lateSince;
+
 }

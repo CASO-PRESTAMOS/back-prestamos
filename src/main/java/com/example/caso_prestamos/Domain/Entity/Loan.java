@@ -1,6 +1,5 @@
 package com.example.caso_prestamos.Domain.Entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.persistence.Id;
 import lombok.Data;

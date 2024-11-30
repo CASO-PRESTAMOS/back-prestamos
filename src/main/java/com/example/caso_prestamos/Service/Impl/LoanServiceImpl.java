@@ -23,40 +23,34 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public Loan createLoan(String identifier, Double amount, Integer months) {
-        // Validación de duración del préstamo
         if (months != 1 && months != 6) {
             throw new IllegalArgumentException("La duración del préstamo solo puede ser de 1 o 6 meses.");
         }
 
-        // Buscar el usuario
         User user = userRepository.findById(identifier)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con identificador: " + identifier));
 
-        // Verificar si el usuario tiene un préstamo activo no pagado
         Loan existingLoan = loanRepository.findFirstByUserAndStatusNot(user, LoanStatus.PAID);
         if (existingLoan != null) {
             throw new IllegalArgumentException("El usuario ya tiene un préstamo activo que no ha sido pagado.");
         }
 
-        // Crear el nuevo préstamo
         Loan loan = new Loan();
         loan.setUser(user);
         loan.setAmount(amount);
         loan.setMonths(months);
-        loan.setInterestRate(calculateInterestRate(months));
+        loan.setInterestRate(calculateInterestRate(months)); // Usa el nuevo método para la tasa
         loan.setStartDate(LocalDate.now());
         loan.setEndDate(LocalDate.now().plusDays(months * 30));
         loan.setStatus(LoanStatus.UNPAID);
 
         Loan savedLoan = loanRepository.save(loan);
 
-        // Crear cronograma de pagos
         List<PaymentSchedule> paymentScheduleList = paymentScheduleService.generatePaymentSchedule(savedLoan);
         savedLoan.setPaymentScheduleList(paymentScheduleList);
 
         return loanRepository.save(savedLoan);
     }
-
 
     @Override
     public List<Loan> getLoansByUser(String identifier) {
@@ -110,8 +104,7 @@ public class LoanServiceImpl implements LoanService {
     }
 
     private Double calculateInterestRate(Integer months) {
-        // Ejemplo simple: 2% por 1 mes y 4% por 6 meses
-        return months == 1 ? 0.20 : 0.40;
+        return months == 1 ? 0.15 : 0.10;
     }
 
     public boolean doesPaymentExist(Long paymentId) {
