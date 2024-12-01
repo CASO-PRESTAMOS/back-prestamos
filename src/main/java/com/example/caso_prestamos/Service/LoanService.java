@@ -9,6 +9,7 @@ public interface LoanService {
 
     Loan createLoan(String identifier, Double amount, Integer months);
     List<Loan> getLoansByUser(String identifier);
+    Loan getLoan(Long loanId);
     void updatePaymentStatus(Long paymentId);
     List<PaymentSchedule> getPaymentScheduleByLoan(Long loanId);
     boolean doesPaymentExist(Long paymentId);

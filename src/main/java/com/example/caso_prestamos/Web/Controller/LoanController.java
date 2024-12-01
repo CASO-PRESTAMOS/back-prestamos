@@ -65,6 +65,12 @@ public class LoanController {
         }
     }
 
+    @GetMapping("/loan/{id}")
+    public ResponseEntity<Loan> getLoanById(@PathVariable Long id) {
+        Loan loan = loanService.getLoan(id);
+        return ResponseEntity.ok(loan);
+    }
+
     // Actualizar el estado de un pago en el cronograma de pagos, solo a PAID
     @PatchMapping("/payment/{paymentId}/markPaid")
     public ResponseEntity<Void> updatePaymentStatus(@PathVariable Long paymentId) {
