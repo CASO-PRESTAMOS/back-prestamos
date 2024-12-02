@@ -60,6 +60,13 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
+    public Loan getLoan(Long loanId) {
+        return loanRepository.findById(loanId).orElseThrow(
+                () -> new RuntimeException("Prestamo no encontrado con identificador: " + loanId)
+        );
+    }
+
+    @Override
     public void updatePaymentStatus(Long paymentId) {
         // Encontrar el pago por su ID
         PaymentSchedule payment = paymentScheduleRepository.findById(paymentId)
