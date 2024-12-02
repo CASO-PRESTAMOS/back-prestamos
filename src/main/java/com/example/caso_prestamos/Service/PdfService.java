@@ -3,8 +3,6 @@ package com.example.caso_prestamos.Service;
 import com.example.caso_prestamos.Domain.Entity.*;
 import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.html2pdf.ConverterProperties;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -39,35 +37,37 @@ public class PdfService {
                 + "</style>";
 
         // Encabezado
-        htmlContent.append("<html><head><title>Reporte de Préstamo</title>").append(css).append("</head><body>");
+        htmlContent.append("<html><head><title>Cronograma de pagos</title>").append(css).append("</head><body>");
 
         // Título
         htmlContent.append("<div class='container'>")
-                .append("<h1>Reporte de Préstamo</h1>");
+                .append("<h1>Cronograma de pagos</h1>");
 
         // Información del préstamo
         htmlContent.append("<div class='section-title'>Datos del Préstamo:</div>");
         htmlContent.append("<table class='info-table'>")
-                .append("<tr><td><b>Usuario:</b> <img src='https://img.icons8.com/ios-filled/50/000000/user.png' alt='Usuario'></td><td>").append(loan.getUser().getFullName()).append("</td></tr>")
-                .append("<tr><td><b>Monto:</b> <img src='https://img.icons8.com/ios-filled/50/4caf50/money.png' alt='Monto'></td><td>S/ ").append(loan.getAmount()).append("</td></tr>")
-                .append("<tr><td><b>Duración:</b> <img src='https://img.icons8.com/ios-filled/50/000000/calendar.png' alt='Duración'></td><td>").append(loan.getMonths()).append(" meses</td></tr>")
-                .append("<tr><td><b>Tasa de Interés:</b> <img src='https://img.icons8.com/ios-filled/50/f44336/percentage.png' alt='Tasa de Interés'></td><td>").append((int)(loan.getInterestRate() * 100)).append("%</td></tr>")
-                .append("<tr><td><b>Fecha de Inicio:</b> <img src='https://img.icons8.com/ios-filled/50/000000/calendar.png' alt='Fecha de Inicio'></td><td>").append(loan.getStartDate()).append("</td></tr>")
-                .append("<tr><td><b>Fecha de Fin:</b> <img src='https://img.icons8.com/ios-filled/50/000000/calendar.png' alt='Fecha de Fin'></td><td>").append(loan.getEndDate()).append("</td></tr>");
+                .append("<tr><td><b>Usuario:</b> </td><td>").append(loan.getUser().getFullName()).append("</td></tr>")
+                .append("<tr><td><b>Monto:</b> </td><td>S/ ").append(loan.getAmount()).append("</td></tr>")
+                .append("<tr><td><b>Duración:</b> </td><td>").append(loan.getMonths()).append(" meses</td></tr>")
+                .append("<tr><td><b>Tasa de Interés:</b> </td><td>").append((int)(loan.getInterestRate() * 100)).append("%</td></tr>")
+                .append("<tr><td><b>Fecha de Inicio:</b> </td><td>").append(loan.getStartDate()).append("</td></tr>")
+                .append("<tr><td><b>Fecha de Fin:</b> </td><td>").append(loan.getEndDate()).append("</td></tr>");
 
         // Agregar un icono en la sección "Estado"
         if (loan.getStatus() == LoanStatus.PAID) {
-            htmlContent.append("<tr><td><b>Estado:</b> <img src='https://img.icons8.com/ios-filled/50/4caf50/ok.png' alt='Pagado'></td><td>Pagado a tiempo</td></tr>");
+            htmlContent.append("<tr><td><b>Estado:</b></td><td>Pagado</td></tr>");
         } else if (loan.getStatus() == LoanStatus.LATE) {
-            htmlContent.append("<tr><td><b>Estado:</b> <img src='https://img.icons8.com/ios-filled/50/f44336/clock.png' alt='Retraso'></td><td>Pagado con retraso</td></tr>");
+            htmlContent.append("<tr><td><b>Estado:</b></td><td>A destiempo</td></tr>");
+        } else{
+            htmlContent.append("<tr><td><b>Estado:</b></td><td>Aun por pagar</td></tr>");
         }
 
         htmlContent.append("</table>");
 
         // Cronograma de Pagos
-        htmlContent.append("<div class='section-title'>Cronograma de Pagos:</div>");
+        htmlContent.append("<div class='section-title'>Cuotas:</div>");
         htmlContent.append("<table>")
-                .append("<tr><th>N° Cuota</th><th>Fecha Vto</th><th>Situación</th><th>Fecha Pago</th></tr>");
+                .append("<tr><th>N° Cuota</th><th>Fecha Vto</th><th>Situación</th><th>Monto</th></tr>");
 
         int paymentNumber = 1;
         for (PaymentSchedule schedule : loan.getPaymentScheduleList()) {
@@ -77,21 +77,18 @@ public class PdfService {
 
             // Asigna el valor de Estado y el icono según el estado del préstamo
             if (loan.getStatus() == LoanStatus.PAID) {
-                Estado = "Pagado a tiempo";
-                iconUrl = "https://img.icons8.com/ios-filled/50/4caf50/ok.png";  // Icono de 'ok'
+                Estado = "Pagado";  // Icono de 'ok'
             } else if (loan.getStatus() == LoanStatus.LATE) {
-                Estado = "Pagado con retraso";
-                iconUrl = "https://img.icons8.com/ios-filled/50/f44336/clock.png";  // Icono de 'retraso'
+                Estado = "A destiempo";
             } else {
-                Estado = "Sin estado"; // Si no está ni pagado a tiempo ni con retraso
-                iconUrl = "https://img.icons8.com/ios-filled/50/9e9e9e/question-mark.png";  // Icono de 'sin estado'
+                Estado = "Aun por pagar"; // Si no está ni pagado a tiempo ni con retraso
             }
 
             htmlContent.append("<tr>")
                     .append("<td>").append(paymentNumber++).append("</td>")
                     .append("<td>").append(schedule.getPaymentDate()).append("</td>")
-                    .append("<td>").append(Estado).append(" <img src='").append(iconUrl).append("' alt='Estado'></td>")
-                    .append("<td>").append(schedule.getLateSince() != null ? schedule.getLateSince() : "-").append("</td>")
+                    .append("<td>").append(Estado).append("</td>")
+                    .append("<td>S/").append(String.format("%.2f", schedule.getAmount())).append("</td>")
                     .append("</tr>");
         }
 
@@ -128,35 +125,42 @@ public class PdfService {
                 + "</style>";
 
 
-        // Encabezado
-        htmlContent2.append("<html><head><title>Reporte de Préstamo</title>").append(css).append("</head><body>");
-
-        // Título
-        htmlContent2.append("<div class='container'>")
-                .append("<h1>Reporte de Préstamo</h1>");
-        htmlContent2.append("<div class='section-title'>Datos del Préstamo:</div>");
         if (loan.getUser().getIdentifier().length() == 8) {
+            // Encabezado
+            htmlContent2.append("<html><head><title>Boleta</title>").append(css).append("</head><body>");
+
+            // Título
+            htmlContent2.append("<div class='container'>")
+                    .append("<h1>Boleta</h1>");
+            htmlContent2.append("<div class='section-title'>Datos del Préstamo:</div>");
 
             // Generar BOLETA (DNI)
             htmlContent2.append("<table class='info-table'>")
-                    .append("<tr><td><b>Usuario:</b> <img src='https://img.icons8.com/ios-filled/50/000000/user.png' alt='Usuario'></td><td>").append(loan.getUser().getFullName()).append("</td></tr>")
-                    .append("<tr><td><b>Monto:</b> <img src='https://img.icons8.com/ios-filled/50/4caf50/money.png' alt='Monto'></td><td>S/ ").append(loan.getAmount()).append("</td></tr>")
-                    .append("<tr><td><b>Duración:</b> <img src='https://img.icons8.com/ios-filled/50/000000/calendar.png' alt='Duración'></td><td>").append(loan.getMonths()).append(" meses</td></tr>")
-                    .append("<tr><td><b>Tasa de Interés:</b> <img src='https://img.icons8.com/ios-filled/50/f44336/percentage.png' alt='Tasa de Interés'></td><td>").append((int) (loan.getInterestRate() * 100)).append("%</td></tr>")
-                    .append("<tr><td><b>Fecha de Inicio:</b> <img src='https://img.icons8.com/ios-filled/50/000000/calendar.png' alt='Fecha de Inicio'></td><td>").append(loan.getStartDate()).append("</td></tr>")
-                    .append("<tr><td><b>Fecha de Fin:</b> <img src='https://img.icons8.com/ios-filled/50/000000/calendar.png' alt='Fecha de Fin'></td><td>").append(loan.getEndDate()).append("</td></tr>")
+                    .append("<tr><td><b>Usuario:</b> </td><td>").append(loan.getUser().getFullName()).append("</td></tr>")
+                    .append("<tr><td><b>Monto:</b> </td><td>S/ ").append(loan.getAmount()).append("</td></tr>")
+                    .append("<tr><td><b>Duración:</b></td><td>").append(loan.getMonths()).append(" meses</td></tr>")
+                    .append("<tr><td><b>Tasa de Interés:</b></td><td>").append((int) (loan.getInterestRate() * 100)).append("%</td></tr>")
+                    .append("<tr><td><b>Fecha de Inicio:</b></td><td>").append(loan.getStartDate()).append("</td></tr>")
+                    .append("<tr><td><b>Fecha de Fin:</b></td><td>").append(loan.getEndDate()).append("</td></tr>")
                     .append("</table>");
         } else if (loan.getUser().getIdentifier().length() == 11) {
+            // Encabezado
+            htmlContent2.append("<html><head><title>Factura</title>").append(css).append("</head><body>");
+
+            // Título
+            htmlContent2.append("<div class='container'>")
+                    .append("<h1>Factura</h1>");
+            htmlContent2.append("<div class='section-title'>Datos del Préstamo:</div>");
 
             // Generar FACTURA (RUC)
             htmlContent2.append("<table class='info-table'>")
-                    .append("<tr><td><b>RUC:</b> <img src='https://img.icons8.com/ios-filled/50/000000/user.png' alt='Usuario'></td><td>").append(loan.getUser().getIdentifier()).append("</td></tr>")
-                    .append("<tr><td><b>Razón Social:</b> <img src='https://img.icons8.com/ios-filled/50/000000/user.png' alt='Usuario'> </td><td>").append(loan.getUser().getFullName()).append("</td></tr>") // Aquí usamos getFullName para la razón social
-                    .append("<tr><td><b>Monto:</b> <img src='https://img.icons8.com/ios-filled/50/4caf50/money.png' alt='Monto'></td><td>S/ ").append(loan.getAmount()).append("</td></tr>")
-                    .append("<tr><td><b>Duración:</b> <img src='https://img.icons8.com/ios-filled/50/000000/calendar.png' alt='Duración'></td><td>").append(loan.getMonths()).append(" meses</td></tr>")
-                    .append("<tr><td><b>Tasa de Interés:</b> <img src='https://img.icons8.com/ios-filled/50/f44336/percentage.png' alt='Tasa de Interés'></td><td>").append((int) (loan.getInterestRate() * 100)).append("%</td></tr>")
-                    .append("<tr><td><b>Fecha de Inicio:</b> <img src='https://img.icons8.com/ios-filled/50/000000/calendar.png' alt='Fecha de Inicio'></td><td>").append(loan.getStartDate()).append("</td></tr>")
-                    .append("<tr><td><b>Fecha de Fin:</b> <img src='https://img.icons8.com/ios-filled/50/000000/calendar.png' alt='Fecha de Fin'></td><td>").append(loan.getEndDate()).append("</td></tr>")
+                    .append("<tr><td><b>RUC:</b></td><td>").append(loan.getUser().getIdentifier()).append("</td></tr>")
+                    .append("<tr><td><b>Razón Social:</b> </td><td>").append(loan.getUser().getFullName()).append("</td></tr>") // Aquí usamos getFullName para la razón social
+                    .append("<tr><td><b>Monto:</b> </td><td>S/ ").append(loan.getAmount()).append("</td></tr>")
+                    .append("<tr><td><b>Duración:</b></td><td>").append(loan.getMonths()).append(" meses</td></tr>")
+                    .append("<tr><td><b>Tasa de Interés:</b> </td><td>").append((int) (loan.getInterestRate() * 100)).append("%</td></tr>")
+                    .append("<tr><td><b>Fecha de Inicio:</b> </td><td>").append(loan.getStartDate()).append("</td></tr>")
+                    .append("<tr><td><b>Fecha de Fin:</b></td><td>").append(loan.getEndDate()).append("</td></tr>")
                     .append("</table>");
         } else {
             // Identificador inválido
@@ -169,33 +173,20 @@ public class PdfService {
         String iconUrl = "";  // URL para los iconos
 
         if (paymentSchedule.getStatus() == PaymentStatus.PAID) {
-            Estado = "Pagado a tiempo";
-            iconUrl = "https://img.icons8.com/ios-filled/50/4caf50/ok.png";  // Ícono de 'ok'
-        } else if (paymentSchedule.getStatus() == PaymentStatus.LATE) {
-            Estado = "Pagado con retraso";
-            iconUrl = "https://img.icons8.com/ios-filled/50/f44336/clock.png";  // Ícono de 'retraso'
+            Estado = "Pagado";
         } else {
-            Estado = "Sin estado";  // Si no está ni pagado a tiempo ni con retraso
-            iconUrl = "https://img.icons8.com/ios-filled/50/9e9e9e/question-mark.png";  // Ícono de 'sin estado'
+            Estado = "Aun por pagar";
         }
 
 // Genera el contenido HTML
         htmlContent2.append("<table class='info-table'>")
                 .append("<tr>")
-                .append("<td><b>Fecha de Pago:</b> <img class='icon' src='https://img.icons8.com/ios-filled/50/000000/calendar.png' alt='Fecha de Pago'></td>")
+                .append("<td><b>Fecha de Pago:</b></td>")
                 .append("<td>").append(paymentSchedule.getPaymentDate()).append("</td>")
                 .append("</tr>")
                 .append("<tr>")
-                .append("<td><b>Monto a Pagar:</b> <img class='icon' src='https://img.icons8.com/ios-filled/50/4caf50/money.png' alt='Monto a Pagar'></td>")
-                .append("<td>S/ ").append(paymentSchedule.getAmount()).append("</td>")
-                .append("</tr>")
-                .append("<tr>")
-                .append("<td><b>Fecha de Retraso:</b> <img class='icon' src='https://img.icons8.com/ios-filled/50/9e9e9e/question-mark.png' alt='Retraso'></td>")
-                .append("<td>").append(paymentSchedule.getLateSince() != null ? paymentSchedule.getLateSince() : "-").append("</td>")
-                .append("</tr>")
-                .append("<tr>")
-                .append("<td><b>Estado:</b> <img class='icon' src='").append(iconUrl).append("' alt='Estado'></td>")
-                .append("<td>").append(Estado).append("</td>")
+                .append("<td><b>Monto a Pagar:</b></td>")
+                .append("<td>S/ ").append(String.format("%.2f", paymentSchedule.getAmount())).append("</td>")
                 .append("</tr>")
                 .append("</table>");
 
