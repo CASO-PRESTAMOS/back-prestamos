@@ -10,6 +10,5 @@ import java.util.List;
 
 @Repository
 public interface PaymentScheduleRepository extends JpaRepository<PaymentSchedule, Long> {
-    List<PaymentSchedule> findByLoanId(Long loanId);
     List<PaymentSchedule> findAllByStatusAndPaymentDateBefore(PaymentStatus status, LocalDate date);
 }

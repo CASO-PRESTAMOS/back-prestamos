@@ -98,29 +98,4 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
         }
     }
 
-
-    @Override
-    public void markAllAsPaid(Long loanId) {
-        List<PaymentSchedule> payments = paymentScheduleRepository.findByLoanId(loanId);
-
-        // Marcar todos los pagos como PAID
-        for (PaymentSchedule payment : payments) {
-            payment.setStatus(PaymentStatus.PAID);
-        }
-
-        paymentScheduleRepository.saveAll(payments);
-
-        // Obtener el préstamo relacionado
-        Loan loan = payments.get(0).getLoan();
-
-        // Verificar si todos los pagos están marcados como PAID
-        boolean allPaid = payments.stream()
-                .allMatch(payment -> payment.getStatus() == PaymentStatus.PAID);
-
-        // Si todos los pagos están pagados, actualizar el estado del préstamo a PAID
-        if (allPaid) {
-            loan.setStatus(LoanStatus.PAID);
-            loanRepository.save(loan);  // Guardar el préstamo actualizado
-        }
-    }
 }

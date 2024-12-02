@@ -9,5 +9,4 @@ import java.util.List;
 public interface PaymentScheduleService {
 
     List<PaymentSchedule> generatePaymentSchedule(Loan loan);
-    void markAllAsPaid(Long loanId);
 }
