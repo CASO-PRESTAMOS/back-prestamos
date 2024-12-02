@@ -103,6 +103,8 @@ public class LoanServiceImpl implements LoanService {
         return loan.getPaymentScheduleList();
     }
 
+
+
     private Double calculateInterestRate(Integer months) {
         return months == 1 ? 0.15 : 0.10;
     }

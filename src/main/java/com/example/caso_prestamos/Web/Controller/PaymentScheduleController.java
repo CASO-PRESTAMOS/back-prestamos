@@ -1,10 +1,16 @@
 package com.example.caso_prestamos.Web.Controller;
 
+import com.example.caso_prestamos.Domain.Entity.PaymentSchedule;
 import com.example.caso_prestamos.Service.PaymentScheduleService;
 import com.example.caso_prestamos.Service.LoanService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/admin/payments")
@@ -36,4 +42,5 @@ public class PaymentScheduleController {
             throw new RuntimeException("Error al marcar todas las cuotas como pagadas: " + e.getMessage(), e);
         }
     }
+
 }
