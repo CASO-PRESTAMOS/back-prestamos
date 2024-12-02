@@ -13,8 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -53,13 +55,14 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
     @Transactional
     @Scheduled(cron = "*/10 * * * * ?")  // Ejecuta a las 00:00 todos los días
     public void updatePaymentStatusAutomatically() {
-        // Obtener todos los pagos no pagados cuyo plazo haya pasado
-        List<PaymentSchedule> overduePayments = paymentScheduleRepository.findAllByStatusAndPaymentDateBefore(PaymentStatus.UNPAID, LocalDate.now());
+        // Obtener todos los pagos no realizados cuyo plazo haya pasado
+        List<PaymentSchedule> overduePayments = paymentScheduleRepository.findAllByStatusAndPaymentDateBefore(
+                PaymentStatus.UNPAID, LocalDate.now());
 
         for (PaymentSchedule payment : overduePayments) {
             Loan loan = payment.getLoan();
 
-            // Si ya pasó un año desde la fecha de inicio del préstamo
+            // Verificar si ya pasó un año desde la fecha de inicio del préstamo
             if (loan.getStartDate().plusYears(1).isBefore(LocalDate.now())) {
                 // Detener la acumulación de interés y cambiar el estado del préstamo a "judicial-debt"
                 loan.setStatus(LoanStatus.JUDICIAL_DEBT);
@@ -67,17 +70,26 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
                 continue;
             }
 
-            // Si la fecha de pago ya pasó y el pago no está realizado, actualizar el estado a LATE
+            // Si el pago está vencido, actualizar su estado y calcular intereses
             if (payment.getPaymentDate().isBefore(LocalDate.now())) {
                 payment.setStatus(PaymentStatus.LATE);
 
-                // Calcular el interés adicional
-                double additionalInterest = loan.getAmount() * 0.01; // 1% del monto original
-                payment.setAmount(payment.getAmount() + additionalInterest);
+                // Calcular los días de retraso
+                long daysLate = ChronoUnit.DAYS.between(payment.getPaymentDate(), LocalDate.now());
+
+                // Calcular el nuevo monto con interés del 1% acumulado diariamente
+                double originalAmount = payment.getAmount();
+                double newAmount = originalAmount * Math.pow(1.01, daysLate); // Fórmula para interés compuesto diario
+                payment.setAmount(newAmount);
+
+                // Registrar la fecha desde cuando el pago está atrasado
+                if (payment.getLateSince() == null) {
+                    payment.setLateSince(payment.getPaymentDate());
+                }
 
                 paymentScheduleRepository.save(payment);
 
-                // Actualizar el estado del préstamo a LATE si tiene pagos atrasados
+                // Verificar si algún pago del préstamo está atrasado y actualizar el estado del préstamo
                 if (loan.getPaymentScheduleList().stream().anyMatch(ps -> ps.getStatus() == PaymentStatus.LATE)) {
                     loan.setStatus(LoanStatus.LATE);
                     loanRepository.save(loan);

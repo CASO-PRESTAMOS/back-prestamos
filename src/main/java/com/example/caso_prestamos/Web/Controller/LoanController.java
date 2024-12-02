@@ -112,4 +112,6 @@ public class LoanController {
             throw new RuntimeException("Error al obtener el cronograma de pagos del préstamo: " + e.getMessage(), e);
         }
     }
+
+
 }
