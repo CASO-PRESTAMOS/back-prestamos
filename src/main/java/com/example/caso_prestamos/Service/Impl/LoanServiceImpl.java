@@ -80,14 +80,13 @@ public class LoanServiceImpl implements LoanService {
         Loan loan = payment.getLoan();
 
         // Recorrer todas las cuotas y marcar como PAID las anteriores a la cuota actual
-        List<PaymentSchedule> paymentSchedules = loan.getPaymentScheduleList();
-        for (PaymentSchedule currentPayment : paymentSchedules) {
-            // Si el índice de la cuota es menor que la cuota seleccionada, marcar como PAID
-            if (currentPayment.getPaymentDate().isBefore(payment.getPaymentDate())) {
-                if (currentPayment.getStatus() != PaymentStatus.PAID) {
-                    currentPayment.setStatus(PaymentStatus.PAID);
-                    paymentScheduleRepository.save(currentPayment);
-                }
+        if(loan.getStatus() == LoanStatus.LATE) {
+            boolean anyLatePaymentsRemaining = loan.getPaymentScheduleList().stream()
+                    .anyMatch(paymenty -> paymenty.getStatus() == PaymentStatus.LATE);
+
+            if (!anyLatePaymentsRemaining) {
+                loan.setStatus(LoanStatus.UNPAID);
+                loanRepository.save(loan);
             }
         }
 
