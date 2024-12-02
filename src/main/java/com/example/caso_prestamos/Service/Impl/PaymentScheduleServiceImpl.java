@@ -1,116 +1,126 @@
 package com.example.caso_prestamos.Service.Impl;
 
 import com.example.caso_prestamos.Domain.Entity.Loan;
+import com.example.caso_prestamos.Domain.Entity.LoanStatus;
 import com.example.caso_prestamos.Domain.Entity.PaymentSchedule;
-import com.example.caso_prestamos.Domain.Entity.Status;
-import com.example.caso_prestamos.Repository.PaymentScheduleRepository;
+import com.example.caso_prestamos.Domain.Entity.PaymentStatus;
 import com.example.caso_prestamos.Repository.LoanRepository;
+import com.example.caso_prestamos.Repository.PaymentScheduleRepository;
 import com.example.caso_prestamos.Service.PaymentScheduleService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+@RequiredArgsConstructor
 @Service
 public class PaymentScheduleServiceImpl implements PaymentScheduleService {
 
-    @Autowired
-    private PaymentScheduleRepository paymentScheduleRepository;
+    private final PaymentScheduleRepository paymentScheduleRepository;
+    private final LoanRepository loanRepository;
 
-    @Autowired
-    private LoanRepository loanRepository;
-
-    // Metodo para generar el calendario de pagos para todos los préstamos
     @Override
-    public void generatePaymentSchedulesForAllLoans() {
-        List<Loan> loans = loanRepository.findAll();
+    public List<PaymentSchedule> generatePaymentSchedule(Loan loan) {
+        List<PaymentSchedule> scheduleList = new ArrayList<>();
 
-        for (Loan loan : loans) {
-            LocalDateTime startDate = loan.getStartDate();
+        Double principal = loan.getAmount(); // Capital inicial
+        Double rate = loan.getInterestRate(); // Tasa de interés
+        Integer months = loan.getMonths(); // Periodos en meses
+        Integer n = 1; // Número de veces que se aplica el interés por periodo (mensual en este caso)
+        Double totalAmount = principal * Math.pow(1 + rate / n, n * months); // Fórmula de interés compuesto
+        Double monthlyPayment = totalAmount / months; // Dividimos en pagos mensuales
 
-            // Calcula el monto de la cuota mensual dividiendo el totalAmount por la duración
-            Double installmentAmount = loan.getTotalAmount() / loan.getDuration();
+        LocalDate paymentDate = loan.getStartDate().plusDays(30);
+        for (int i = 0; i < months; i++) {
+            PaymentSchedule payment = new PaymentSchedule();
+            payment.setLoan(loan);
+            payment.setPaymentDate(paymentDate);
+            payment.setAmount(monthlyPayment); // Monto de la cuota
+            payment.setStatus(PaymentStatus.UNPAID);
 
-            for (int month = 1; month <= loan.getDuration(); month++) {
-                LocalDateTime paymentDueDate = startDate.plusMonths(month);
+            scheduleList.add(payment);
+            paymentDate = paymentDate.plusDays(30);
+        }
 
-                // Verificar si ya existe un cronograma para la fecha y préstamo actual
-                boolean scheduleExists = paymentScheduleRepository.existsByLoanAndPaymentDueDate(loan, paymentDueDate);
+        return paymentScheduleRepository.saveAll(scheduleList);
+    }
 
-                // Solo crear el cronograma si no existe
-                if (!scheduleExists) {
-                    PaymentSchedule paymentSchedule = new PaymentSchedule();
-                    paymentSchedule.setLoan(loan);
-                    paymentSchedule.setPaymentDueDate(paymentDueDate);
-                    paymentSchedule.setPaid(false);
+    // Este metodo se ejecutara automaticamente cada dia a la medianoche
+    @Transactional
+    @Scheduled(cron = "*/10 * * * * ?")  // Ejecuta a las 00:00 todos los días
+    public void updatePaymentStatusAutomatically() {
+        // Obtener todos los pagos no realizados cuyo plazo haya pasado
+        List<PaymentSchedule> overduePayments = paymentScheduleRepository.findAllByStatusAndPaymentDateBefore(
+                PaymentStatus.UNPAID, LocalDate.now());
 
-                    // Asignar el monto de la cuota mensual
-                    paymentSchedule.setInstallmentAmount(installmentAmount);
+        for (PaymentSchedule payment : overduePayments) {
+            Loan loan = payment.getLoan();
 
-                    paymentScheduleRepository.save(paymentSchedule);
+            // Verificar si ya pasó un año desde la fecha de inicio del préstamo
+            if (loan.getStartDate().plusYears(1).isBefore(LocalDate.now())) {
+                // Detener la acumulación de interés y cambiar el estado del préstamo a "judicial-debt"
+                loan.setStatus(LoanStatus.JUDICIAL_DEBT);
+                loanRepository.save(loan);
+                continue;
+            }
+
+            // Si el pago está vencido, actualizar su estado y calcular intereses
+            if (payment.getPaymentDate().isBefore(LocalDate.now())) {
+                payment.setStatus(PaymentStatus.LATE);
+
+                // Calcular los días de retraso
+                long daysLate = ChronoUnit.DAYS.between(payment.getPaymentDate(), LocalDate.now());
+
+                // Calcular el nuevo monto con interés del 1% acumulado diariamente
+                double originalAmount = payment.getAmount();
+                double newAmount = originalAmount * Math.pow(1.01, daysLate); // Fórmula para interés compuesto diario
+                payment.setAmount(newAmount);
+
+                // Registrar la fecha desde cuando el pago está atrasado
+                if (payment.getLateSince() == null) {
+                    payment.setLateSince(payment.getPaymentDate());
+                }
+
+                paymentScheduleRepository.save(payment);
+
+                // Verificar si algún pago del préstamo está atrasado y actualizar el estado del préstamo
+                if (loan.getPaymentScheduleList().stream().anyMatch(ps -> ps.getStatus() == PaymentStatus.LATE)) {
+                    loan.setStatus(LoanStatus.LATE);
+                    loanRepository.save(loan);
                 }
             }
         }
     }
 
-    // Metodo para obtener todos los calendarios de pago
+
     @Override
-    public List<PaymentSchedule> getAllPaymentSchedules() {
-        return paymentScheduleRepository.findAll();
-    }
+    public void markAllAsPaid(Long loanId) {
+        List<PaymentSchedule> payments = paymentScheduleRepository.findByLoanId(loanId);
 
-    // Metodo para marcar un pago como completado
-    @Override
-    public void markPaymentAsCompleted(Long paymentId) {
-        // Busca el cronograma de pago por ID
-        PaymentSchedule paymentSchedule = paymentScheduleRepository.findById(paymentId)
-                .orElseThrow(() -> new IllegalArgumentException("Payment Schedule not found"));
-
-        Loan loan = paymentSchedule.getLoan();
-
-        // Obtén todos los pagos asociados al préstamo, ordenados por la fecha de vencimiento
-        List<PaymentSchedule> allPayments = paymentScheduleRepository.findByLoan_LoanIdOrderByPaymentDueDateAsc(loan.getLoanId());
-
-        // Encuentra el índice del cronograma actual
-        int index = allPayments.indexOf(paymentSchedule);
-
-        // Marca como completados todos los cronogramas hasta el seleccionado, incluidos los anteriores
-        for (int i = 0; i <= index; i++) {
-            PaymentSchedule currentSchedule = allPayments.get(i);
-            if (!currentSchedule.isPaid()) {  // Solo marcar si aún no está pagado
-                currentSchedule.setPaid(true);
-                paymentScheduleRepository.save(currentSchedule);
-            }
+        // Marcar todos los pagos como PAID
+        for (PaymentSchedule payment : payments) {
+            payment.setStatus(PaymentStatus.PAID);
         }
 
-        // Verifica si todos los pagos del préstamo están completados
-        boolean allPaid = allPayments.stream().allMatch(PaymentSchedule::isPaid);
+        paymentScheduleRepository.saveAll(payments);
 
-        // Si todos los pagos están completos, cambia el estado del préstamo
+        // Obtener el préstamo relacionado
+        Loan loan = payments.get(0).getLoan();
+
+        // Verificar si todos los pagos están marcados como PAID
+        boolean allPaid = payments.stream()
+                .allMatch(payment -> payment.getStatus() == PaymentStatus.PAID);
+
+        // Si todos los pagos están pagados, actualizar el estado del préstamo a PAID
         if (allPaid) {
-            loan.setStatus(Status.COMPLETE); // Cambia el estado del préstamo a COMPLETO
-            loanRepository.save(loan);
-        }
-    }
-
-    // Metodo para enviar alertas de pago
-    @Scheduled(fixedRate = 86400000) // Ejecutar diariamente
-    @Override
-    public void sendPaymentAlerts() {
-        LocalDateTime now = LocalDateTime.now();
-        // Busca los pagos vencidos que no han sido pagados
-        List<PaymentSchedule> duePayments = paymentScheduleRepository.findByPaymentDueDateBeforeAndPaidFalse(now.plusDays(1));
-
-        for (PaymentSchedule payment : duePayments) {
-            // Supongamos que el objeto Loan tiene un metodo getDebtorName() para obtener el nombre del deudor
-            String debtorName = payment.getLoan().getClientName(); // Cambia esto según tu modelo de datos
-            Long paymentScheduleId = payment.getId(); // Obtén el ID del cronograma de pagos
-
-            System.out.println("Alerta: El pago con ID " + paymentScheduleId +
-                    " con vencimiento el " + payment.getPaymentDueDate() +
-                    " está próximo. Deudor: " + debtorName + ".");
+            loan.setStatus(LoanStatus.PAID);
+            loanRepository.save(loan);  // Guardar el préstamo actualizado
         }
     }
 }

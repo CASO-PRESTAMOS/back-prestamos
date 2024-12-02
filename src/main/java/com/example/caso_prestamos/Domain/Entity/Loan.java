@@ -5,7 +5,8 @@ import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Data
@@ -13,19 +14,22 @@ import java.time.LocalDateTime;
 public class Loan {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long loanId;
+    private Long id;
 
-    private String clientName;
-    private String clientDNI;
-    private String clientAddress;
-    private Double amount;
-    private Integer duration; // Duration in months
-    private Double interestRate;
-    private Double totalAmount;
+    @ManyToOne
+    @JoinColumn(name = "user_identifier", nullable = false)
+    private User user; // Relación con User
 
-    private LocalDateTime startDate;
-    private LocalDateTime expireDate;
+    private Double amount; // Monto del préstamo
+    private Integer months; // Duración en meses
+    private Double interestRate; // Tasa de interés
+    private LocalDate startDate; // Fecha de inicio
+    private LocalDate endDate; // Fecha de fin
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private LoanStatus status; // Estado del préstamo
+
+    @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PaymentSchedule> paymentScheduleList; // Lista de pagos asociados
+
 }

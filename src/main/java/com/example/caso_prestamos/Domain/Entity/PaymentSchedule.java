@@ -1,10 +1,10 @@
 package com.example.caso_prestamos.Domain.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Data
@@ -16,13 +16,17 @@ public class PaymentSchedule {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne // Relación con Loan
-    @JoinColumn(name = "loan_id", nullable = false) // loan_id será la clave foránea
-    private Loan loan;
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "loan_id", nullable = false)
+    private Loan loan; // Relación con Loan
 
-    private LocalDateTime paymentDueDate;
+    private LocalDate paymentDate; // Fecha del pago
+    private Double amount; // Monto a pagar en esa fecha
 
-    private boolean paid;
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status; // Estado del pago
 
-    private Double installmentAmount;
+    private LocalDate lateSince;
+
 }

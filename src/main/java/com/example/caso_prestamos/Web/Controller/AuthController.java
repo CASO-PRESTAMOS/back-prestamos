@@ -1,10 +1,13 @@
 package com.example.caso_prestamos.Web.Controller;
 
+import com.example.caso_prestamos.Domain.Entity.Admin;
 import com.example.caso_prestamos.Security.LoginRequest;
 import com.example.caso_prestamos.Security.TokenResponse;
 import com.example.caso_prestamos.Security.JwtService;
+import com.example.caso_prestamos.Service.AdminService;
 import com.example.caso_prestamos.Service.Auth.AdminDetailsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,6 +23,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final AdminDetailsService adminDetailsService;
+    private final AdminService adminService;
 
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest loginRequest) {
@@ -34,5 +38,11 @@ public class AuthController {
         String jwt = jwtService.generateToken(userDetails);
 
         return ResponseEntity.ok(new TokenResponse(jwt));
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<Void> update(@RequestBody String password) {
+        adminService.updatePassword(password);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }
