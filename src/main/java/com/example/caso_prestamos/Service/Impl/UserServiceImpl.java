@@ -87,13 +87,4 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll();
     }
 
-    @Override
-    public User updateUser(User user) {
-        return userRepository.save(user); // METODO NO USADO YA QUE NO LE VEO SENTIDO, PERO LO DEJO POR SI LO OCUPAMOS LUEGO
-    }
-
-    @Override
-    public void deleteUser(String identifier) {
-        userRepository.deleteById(identifier);
-    }
 }

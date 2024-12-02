@@ -62,38 +62,5 @@ public class UserController {
         }
     }
 
-    // Endpoint para actualizar un usuario
-    @PutMapping("/update")
-    public ResponseEntity<User> updateUser(@RequestBody User user) {
-    // METODO NO USADO YA QUE NO LE VEO SENTIDO, PERO LO DEJO POR SI LO OCUPAMOS LUEGO
-        try {
-            if (user.getIdentifier() == null) {
-                throw new IllegalArgumentException("El usuario debe tener un ID válido para ser actualizado.");
-            }
-            User updatedUser = userService.updateUser(user);
-            return new ResponseEntity<>(updatedUser, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            throw e; // Será manejado por CustomExceptionHandler
-        } catch (Exception e) {
-            throw new RuntimeException("Error al actualizar el usuario: " + e.getMessage(), e);
-        }
-    }
-
-    // Endpoint para eliminar un usuario por DNI
-    @DeleteMapping("/delete/{identifier}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String identifier) {
-        try {
-            if (identifier.isBlank()) {
-                throw new IllegalArgumentException("El identificador no puede estar vacío.");
-            }
-            userService.deleteUser(identifier);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (IllegalArgumentException e) {
-            throw e; // Será manejado por CustomExceptionHandler
-        } catch (Exception e) {
-            throw new RuntimeException("Error al eliminar el usuario con identificador: " + identifier, e);
-        }
-    }
-
 }
 
