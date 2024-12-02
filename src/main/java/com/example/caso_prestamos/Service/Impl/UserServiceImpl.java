@@ -73,7 +73,7 @@ public class UserServiceImpl implements UserService {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", "application/json");
         headers.set("Content-Type", "application/json");
-        headers.setBearerAuth("08e86b5bf8e05483a6b4d9bf13f0844936f5cf68b4f0dde76e80449f59a6c324");
+        headers.setBearerAuth("1cca345836605bcf5c7e59e83f725680cd491912e1a8dcdbd2a3cdb08f3d4cfc");
         return headers;
     }
 
