@@ -52,7 +52,7 @@ public class PaymentScheduleServiceImpl implements PaymentScheduleService {
 
     // Este metodo se ejecutara automaticamente cada dia a la medianoche
     @Transactional
-    @Scheduled(cron = "0 0 0 * * *")  // Ejecuta a las 00:00 todos los días
+    @Scheduled(cron = "0/30 * * * * *")  // Ejecuta a las 00:00 todos los días
     public void updatePaymentStatusAutomatically() {
         // Obtener todos los pagos no realizados cuyo plazo haya pasado
         List<PaymentSchedule> overduePayments = paymentScheduleRepository.findAllByStatusAndPaymentDateBefore(
